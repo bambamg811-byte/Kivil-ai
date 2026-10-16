@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kıvıl AI</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b1020;color:#f5f6ff;font-family:Arial,sans-serif;min-height:100vh;display:flex;justify-content:center;align-items:center}
+.app{width:100%;max-width:700px;padding:20px}
+header{text-align:center;padding:20px}
+.logo{font-size:48px}
+h1{margin:5px;font-size:32px}
+header p{color:#9eacc8}
+#messages{height:55vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:10px}
+.msg{padding:13px 16px;border-radius:16px;background:#19243b;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}
+.user{background:#6255d9;align-self:flex-end;max-width:90%}
+form{display:flex;gap:8px;margin-top:10px}
+input{flex:1;min-width:0;padding:15px;border:1px solid #33415f;border-radius:14px;background:#141d30;color:white;font-size:16px}
+button{padding:12px 18px;border:0;border-radius:14px;background:#8b7cff;color:#101225;font-weight:bold;font-size:16px}
+footer{text-align:center;color:#75839f;font-size:12px;margin-top:16px}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+<div class="logo">✦</div>
+<h1>Kıvıl AI</h1>
+<p>Merak ettiğin her şey için yanında.</p>
+</header>
+<div id="messages">
+<div class="msg">Selam! Ben Kıvıl AI. Sana nasıl yardımcı olabilirim? 🤖</div>
+</div>
+<form id="form">
+<input id="prompt" placeholder="Kıvıl'a bir şey sor..." required>
+<button id="send">Gönder</button>
+</form>
+<footer>Kıvıl AI · Yapay zekâ asistanın</footer>
+</div>
+<script>
+const form=document.getElementById('form');
+const input=document.getElementById('prompt');
+const messages=document.getElementById('messages');
+const send=document.getElementById('send');
+
+form.addEventListener('submit',async function(e){
+e.preventDefault();
+const text=input.value.trim();
+if(!text)return;
+
+const user=document.createElement('div');
+user.className='msg user';
+user.textContent=text;
+messages.appendChild(user);
+
+input.value='';
+send.disabled=true;
+
+const answer=document.createElement('div');
+answer.className='msg';
+answer.textContent='Kıvıl düşünüyor...';
+messages.appendChild(answer);
+
+try{
+const response=await fetch('/api/chat',{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({messages:[{role:'user',content:text}]})
+});
+const data=await response.json();
+if(!response.ok)throw new Error(data.error||'Bir hata oluştu.');
+answer.textContent=data.reply||'Cevap alınamadı.';
+}catch(error){
+answer.textContent='Bağlantı hatası: '+error.message;
+}
+send.disabled=false;
+messages.scrollTop=messages.scrollHeight;
+});
+</script>
+</body>
+</html>
