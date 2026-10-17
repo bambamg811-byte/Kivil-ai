@@ -58,12 +58,12 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    if (!response.ok) {
-      console.error("Google AI API error:", data?.error?.message);
-      return res.status(502).json({
-        error: "Google AI cevap veremedi. API anahtarını ve kullanım durumunu kontrol et."
-      });
-    }
+  if (!response.ok) {
+  console.error("Google AI API error:", data?.error?.message);
+  return res.status(502).json({
+    error: "Google AI cevap veremedi. API anahtarını ve kullanım durumunu kontrol et."
+  });
+  }
 
     const reply = data?.candidates?.[0]?.content?.parts
       ?.map(part => part.text || "")
