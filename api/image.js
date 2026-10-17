@@ -6,11 +6,12 @@ export default async function handler(req, res) {
     });
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
 
-  if (!apiKey) {
+  if (!accountId || !apiToken) {
     return res.status(500).json({
-      error: "OPENAI_API_KEY Vercel ortam değişkenlerinde bulunamadı."
+      error: "Cloudflare API anahtarı veya Account ID eksik."
     });
   }
 
@@ -25,45 +26,47 @@ export default async function handler(req, res) {
     });
   }
 
-  if (prompt.length > 4000) {
+  if (prompt.length > 2048) {
     return res.status(400).json({
-      error: "Görsel açıklaması en fazla 4000 karakter olabilir."
+      error: "Görsel açıklaması en fazla 2048 karakter olabilir."
     });
   }
 
   try {
     const response = await fetch(
-      "https://api.openai.com/v1/images/generations",
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiToken}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: "gpt-image-1",
           prompt,
-          size: "1024x1024",
-          quality: "low",
-          output_format: "jpeg"
+          steps: 4
         })
       }
     );
 
     const result = await response.json().catch(() => ({}));
 
-    if (!response.ok) {
-      console.error("OpenAI image API error:", result);
-      return res.status(response.status).json({
-        error: result?.error?.message || `Görsel API hatası: ${response.status}`
+    if (!response.ok || result.success === false) {
+      console.error("Cloudflare image API error:", result);
+
+      const errors = Array.isArray(result.errors)
+        ? result.errors.map(e => e.message).filter(Boolean).join(" ")
+        : "";
+
+      return res.status(response.ok ? 502 : response.status).json({
+        error: errors || "Cloudflare görsel üretimi başarısız oldu."
       });
     }
 
-    const image = result?.data?.[0]?.b64_json;
+    const image = result.result?.image;
 
     if (!image) {
       return res.status(502).json({
-        error: "API yanıt verdi ancak görsel verisi bulunamadı."
+        error: "Cloudflare yanıtında görsel verisi bulunamadı."
       });
     }
 
@@ -71,10 +74,10 @@ export default async function handler(req, res) {
       image: `data:image/jpeg;base64,${image}`
     });
   } catch (error) {
-    console.error("Image generation error:", error);
+    console.error("Cloudflare image generation error:", error);
 
     return res.status(500).json({
-      error: "Görsel oluşturulurken sunucu hatası oluştu."
+      error: "Görsel servisine bağlanırken hata oluştu."
     });
   }
 }
