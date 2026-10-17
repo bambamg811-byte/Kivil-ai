@@ -1046,111 +1046,141 @@ function enhanceMessage(body) {
         : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"></path><path d="m5 12 7-7 7 7"></path></svg>';
     }
 
-    async function sendMessage(rawText) {
-      const text = rawText.trim();
-      if (!text || busy) return;
 
-      welcome.hidden = true;
-      const chat = ensureChat(text);
+async function sendMessage(rawText) {
+  const text = rawText.trim();
+  if (!text || busy) return;
 
-      chat.messages.push({ role: "user", content: text });
-      chat.updatedAt = Date.now();
+  const wantsImage =
+    /\b(?:çiz|resim oluştur|görsel oluştur|resim üret|görsel üret|resim çiz|görsel çiz|fotoğraf oluştur|çizim yap|logo tasarla|poster tasarla)\b/i.test(text);
 
-      addMessage("user", text);
-      saveChats();
-      renderHistory();
+  welcome.hidden = true;
+  const chat = ensureChat(text);
 
-      promptEl.value = "";
-      promptEl.style.height = "auto";
-      setBusy(true);
+  chat.messages.push({ role: "user", content: text });
+  chat.updatedAt = Date.now();
 
-      const typing = showTyping();
+  addMessage("user", text);
+  saveChats();
+  renderHistory();
 
-      try {
-        // Bu adres mevcut Vercel backend'inle eşleşmelidir.
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            messages: chat.messages.map(message => ({
-              role: message.role,
-              content: message.content
-            }))
-          })
-        });
+  promptEl.value = "";
+  promptEl.style.height = "auto";
+  setBusy(true);
 
-        const data = await response.json().catch(() => ({}));
+  const typing = showTyping();
 
-        if (!response.ok) {
-          throw new Error(data.error || data.message || `Sunucu hatası (${response.status})`);
-        }
-
-        const answer =
-          data.reply ??
-          data.message ??
-          data.content ??
-          data.choices?.[0]?.message?.content;
-
-        if (typeof answer !== "string" || !answer.trim()) {
-          throw new Error("Sunucudan boş cevap geldi. API yanıt biçimini kontrol et.");
-        }
-
-        typing.row.remove();
-        chat.messages.push({ role: "assistant", content: answer });
-        chat.updatedAt = Date.now();
-
-        addMessage("assistant", answer);
-        saveChats();
-        renderHistory();
-      } catch (error) {
-        typing.row.remove();
-
-        const errorMessage = error?.message || "Bilinmeyen bir hata oluştu.";
-        addMessage(
-          "assistant",
-          "Mesajını işlerken bir sorun oluştu.\n\n**Hata:** " +
-          errorMessage +
-          "\n\nAPI anahtarını ve Vercel dağıtım günlüklerini kontrol et."
-        );
-
-        showToast("Mesaj gönderilemedi.");
-      } finally {
-        setBusy(false);
-        promptEl.focus();
-        scrollToBottom();
+  try {
+    const response = await fetch(
+      wantsImage ? "/api/image" : "/api/chat",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          wantsImage
+            ? { prompt: text }
+            : {
+                messages: chat.messages.map(message => ({
+                  role: message.role,
+                  content: message.content
+                }))
+              }
+        )
       }
+    );
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+        data.message ||
+        `Sunucu hatası (${response.status})`
+      );
     }
 
-    chatForm.addEventListener("submit", event => {
-      event.preventDefault();
-      sendMessage(promptEl.value);
-    });
-
-    promptEl.addEventListener("input", () => {
-      promptEl.style.height = "auto";
-      promptEl.style.height = Math.min(promptEl.scrollHeight, 180) + "px";
-    });
-
-    promptEl.addEventListener("keydown", event => {
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
-        chatForm.requestSubmit();
+    if (wantsImage) {
+      if (
+        typeof data.image !== "string" ||
+        !data.image.startsWith("data:image/")
+      ) {
+        throw new Error("Resim API'si geçerli bir görsel döndürmedi.");
       }
-    });
 
-    document.getElementById("newChat").addEventListener("click", startNewChat);
+      typing.row.remove();
 
-    document.getElementById("mobileMenu").addEventListener("click", () => {
-      sidebar.classList.toggle("open");
-    });
-
-    document.querySelectorAll(".suggestion").forEach(button => {
-      button.addEventListener("click", () => {
-        promptEl.value = button.dataset.prompt || "";
-        promptEl.focus();
-        promptEl.dispatchEvent(new Event("input"));
+      const answer = "🎨 Görsel oluşturuldu: " + text;
+      chat.messages.push({
+        role: "assistant",
+        content: answer
       });
+      chat.updatedAt = Date.now();
+
+      const result = addMessage(
+        "assistant",
+        "🎨 İşte oluşturduğum görsel:"
+      );
+
+      const image = document.createElement("img");
+      image.src = data.image;
+      image.alt = text;
+      image.loading = "lazy";
+      image.style.display = "block";
+      image.style.width = "100%";
+      image.style.maxWidth = "600px";
+      image.style.height = "auto";
+      image.style.marginTop = "12px";
+      image.style.borderRadius = "14px";
+      image.style.border = "1px solid #343651";
+
+      result.body.appendChild(image);
+
+      saveChats();
+      renderHistory();
+      scrollToBottom();
+      return;
+    }
+
+    const answer =
+      data.reply ??
+      data.message ??
+      data.content ??
+      data.choices?.[0]?.message?.content;
+
+    if (typeof answer !== "string" || !answer.trim()) {
+      throw new Error("Sunucudan boş cevap geldi.");
+    }
+
+    typing.row.remove();
+
+    chat.messages.push({
+      role: "assistant",
+      content: answer
     });
+    chat.updatedAt = Date.now();
+
+    addMessage("assistant", answer);
+    saveChats();
+    renderHistory();
+
+  } catch (error) {
+    typing.row.remove();
+
+    addMessage(
+      "assistant",
+      "İsteğin işlenirken bir sorun oluştu.\n\n**Hata:** " +
+      (error?.message || "Bilinmeyen hata") +
+      "\n\nVercel dağıtımını ve API ayarlarını kontrol et."
+    );
+
+    showToast("İstek tamamlanamadı.");
+  } finally {
+    setBusy(false);
+    promptEl.focus();
+    scrollToBottom();
+  }
+}
+
 
     // Önceki sohbetleri yükle.
     renderHistory();
