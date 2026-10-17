@@ -146,8 +146,7 @@ DUYGU VE KİŞİLİK:
           model: "openai/gpt-oss-20b",
 ...(researchMode ? {
   tools: [{ type: "browser_search" }],
-  tool_choice: "required",
-  citation_options: "enabled"
+  tool_choice: "required"
 } : {}),
           messages: [
             {
