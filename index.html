@@ -18,7 +18,7 @@ html = r'''<!DOCTYPE html>
 @media(max-width:720px){.sidebar{position:fixed;z-index:5;inset:0 auto 0 0;transform:translateX(-105%);transition:transform .22s;width:280px;box-shadow:15px 0 40px #0008}.sidebar.open{transform:translateX(0)}.mobile-menu{display:block}.topbar{height:58px;padding:0 13px}.chat{padding:20px 14px}.composer-wrap{padding:8px 10px 12px}.cards{grid-template-columns:1fr}.welcome h1{font-size:36px}.welcome{padding:20px 0}.hint{font-size:10px}}
 </style>
 </head>
-<body><div class="app">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script><body><div class="app">
 <aside class="sidebar" id="sidebar"><div class="brand"><div class="logo">✦</div><span>Kıvıl AI</span><span class="version">2.0</span></div><button class="newchat" id="newChat">＋ &nbsp; Yeni sohbet</button><div class="history-label">SOHBET GEÇMİŞİ</div><div class="history" id="history"></div><div class="side-foot">✦ Kıvıl AI 2.0<br>Groq destekli asistan</div></aside>
 <main class="main"><header class="topbar"><div class="top-left"><button class="mobile-menu" id="menu">☰</button><div class="top-title">Kıvıl <span style="color:#78849e;font-weight:500">/ Asistan 2.0</span></div></div><div class="online"><span class="dot"></span><span id="status">Hazır</span></div></header>
 <section class="chat" id="chat"><div class="inner" id="inner"></div></section>
