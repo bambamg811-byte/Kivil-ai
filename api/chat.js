@@ -18,26 +18,50 @@ const currentDate = new Intl.DateTimeFormat("tr-TR", {
   dateStyle: "full"
 }).format(new Date());
 
-    const chatMessages = messages
-      .filter((m) =>
-        m &&
-        ["user", "assistant"].includes(m.role) &&
-        typeof m.content === "string"
-      )
-      .slice(-20)
-      .map((m) => ({
-        role: m.role,
-        content: m.content.slice(0, 8000)
-      }));
+   const researchMode = req.body?.mode === "research";
 
-    if (
-      !chatMessages.length ||
-      chatMessages[chatMessages.length - 1].role !== "user"
-    ) {
-      return res.status(400).json({
-        error: "Önce bir mesaj yaz."
-      });
-    }
+try {
+  const messages = Array.isArray(req.body?.messages)
+    ? req.body.messages
+    : [];
+
+  const currentDate = new Intl.DateTimeFormat("tr-TR", {
+    timeZone: "Europe/Istanbul",
+    dateStyle: "full"
+  }).format(new Date());
+
+ const researchMode = req.body?.mode === "research";
+
+try {
+  const messages = Array.isArray(req.body?.messages)
+    ? req.body.messages
+    : [];
+
+  const currentDate = new Intl.DateTimeFormat("tr-TR", {
+    timeZone: "Europe/Istanbul",
+    dateStyle: "full"
+  }).format(new Date());
+
+  const chatMessages = messages
+    .filter((m) =>
+      m &&
+      ["user", "assistant"].includes(m.role) &&
+      typeof m.content === "string"
+    )
+    .slice(-20)
+    .map((m) => ({
+      role: m.role,
+      content: m.content.slice(0, 8000)
+    }));
+
+  if (
+    !chatMessages.length ||
+    chatMessages[chatMessages.length - 1].role !== "user"
+  ) {
+    return res.status(400).json({
+      error: "Önce bir mesaj yaz."
+    });
+  }
 const researchInstructions = researchMode ? `
 
 KIVIL AI - GÜVENİLİR İNTERNET ARAŞTIRMASI
