@@ -1,8 +1,9 @@
-
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
-    return res.status(405).json({ error: "POST isteği gerekli." });
+    return res.status(405).json({
+      error: "POST isteği gerekli."
+    });
   }
 
   const apiKey = process.env.GROQ_API_KEY;
@@ -19,13 +20,13 @@ export default async function handler(req, res) {
       : [];
 
     const chatMessages = messages
-      .filter(m =>
+      .filter((m) =>
         m &&
         ["user", "assistant"].includes(m.role) &&
         typeof m.content === "string"
       )
       .slice(-20)
-      .map(m => ({
+      .map((m) => ({
         role: m.role,
         content: m.content.slice(0, 8000)
       }));
@@ -34,42 +35,44 @@ export default async function handler(req, res) {
       !chatMessages.length ||
       chatMessages[chatMessages.length - 1].role !== "user"
     ) {
-      return res.status(400).json({ error: "Önce bir mesaj yaz." });
+      return res.status(400).json({
+        error: "Önce bir mesaj yaz."
+      });
     }
 
- 
-const systemPrompt = `
+    const systemPrompt = `
 Sen Kıvıl AI adlı, Türkçe konuşan, samimi ve faydalı bir yapay zekâ asistanısın.
 
 GENEL KURALLAR:
 - Türkçe, doğal, açık ve faydalı cevaplar ver.
 - Emin olmadığında bunu açıkça belirt, bilgi uydurma.
 - Gerektiğinde Markdown başlıkları, listeler, tablolar ve kod örnekleri kullan.
-- Matematik formüllerinde KaTeX uyumlu LaTeX kullan. Satır içi formüller için \\( ... \\), ayrı satırlar için \\[ ... \\] kullan.
-- Kullanıcı grafik, geometrik şekil veya 3D model istediğinde aşağıdaki özel formatları kullan.
-- Özel formatların JSON içeriği geçerli olmalı. JSON içine yorum ekleme.
-- Grafik, geometri ve 3D model isteklerini ASCII çizim veya Python koduyla geçiştirme.
+- Matematik formüllerinde LaTeX kullan.
+- Grafik, geometri veya 3D model istenirse aşağıdaki özel formatları kullan.
+- Özel formatların JSON içeriği geçerli olmalı.
+- ASCII çizim veya Python koduyla grafik isteğini geçiştirme.
 
 GRAFİK:
-Grafik istendiğinde yanıtına chart kod bloğu ekle. Bloğun içinde yalnızca geçerli JSON olsun.
-Örnek biçim:
+Grafik istendiğinde şu biçimde chart kod bloğu üret:
 \`\`\`chart
 {
   "title": "Örnek grafik",
   "type": "bar",
   "labels": ["A", "B", "C"],
   "datasets": [
-    {"label": "Değer", "data": [12, 19, 8]}
+    {
+      "label": "Değer",
+      "data": [12, 19, 8]
+    }
   ]
 }
 \`\`\`
 - type yalnızca bar, line, pie veya doughnut olabilir.
-- labels ile her dataset içindeki data dizisinin uzunluğu aynı olmalı.
+- labels ile data dizilerinin uzunluğu aynı olmalı.
 - Gerçek verileri bilmiyorsan örnek veri olduğunu belirt.
 
 GEOMETRİ:
-Kullanıcı üçgen, daire, kare veya dikdörtgen istediğinde geometry kod bloğu üret.
-Örnek biçim:
+Üçgen, daire, kare veya dikdörtgen istendiğinde geometry kod bloğu üret:
 \`\`\`geometry
 {
   "title": "Üçgen",
@@ -80,8 +83,7 @@ Kullanıcı üçgen, daire, kare veya dikdörtgen istediğinde geometry kod blo�
 - shape yalnızca triangle, circle, square veya rectangle olabilir.
 
 3D MODEL:
-Kullanıcı 3D model istediğinde 3d kod bloğu üret.
-Örnek biçim:
+3D model istendiğinde 3d kod bloğu üret:
 \`\`\`3d
 {
   "title": "3D küp",
@@ -94,33 +96,74 @@ Kullanıcı 3D model istediğinde 3d kod bloğu üret.
 
 KOD:
 - Kod istendiğinde uygun ve açıklanmış kod ver.
-- Gerçekte çalıştırmadığın kodu çalıştırdığını iddia etme.
-- Özel grafik, geometri ve 3D bloklarının içine HTML veya JavaScript koyma.
+- Çalıştırmadığın kodu çalıştırdığını iddia etme.
+- Grafik, geometri ve 3D kod bloklarına HTML veya JavaScript ekleme.
 `;
 
+    // Groq API isteği
+    const response = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "openai/gpt-oss-20b",
+          messages: [
+            {
+              role: "system",
+              content: systemPrompt
+            },
+            ...chatMessages
+          ],
+          temperature: 0.7,
+          max_completion_tokens: 2048,
+          reasoning_effort: "low",
+          include_reasoning: false
+        })
+      }
+    );
 
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      console.error("Groq API error:", response.status, data?.error?.message);
+      const apiMessage =
+        data?.error?.message || "Bilinmeyen API hatası";
+
+      console.error(
+        "Groq API error:",
+        response.status,
+        apiMessage
+      );
+
       return res.status(502).json({
-        error: `Groq API (${response.status}): ${
-          data?.error?.message || "Bilinmeyen API hatası"
-        }`
+        error: `Groq API (${response.status}): ${apiMessage}`
       });
     }
 
-    const reply = data?.choices?.[0]?.message?.content?.trim();
+    const reply =
+      data?.choices?.[0]?.message?.content?.trim();
 
     if (!reply) {
+      console.error(
+        "Groq boş yanıt döndürdü:",
+        JSON.stringify(data).slice(0, 1500)
+      );
+
       return res.status(502).json({
-        error: "Yanıt oluşturulamadı."
+        error: "Groq boş yanıt döndürdü. Lütfen tekrar dene."
       });
     }
 
-    return res.status(200).json({ reply });
+    return res.status(200).json({
+      reply: reply
+    });
+
   } catch (error) {
-    console.error("Kıvıl AI error:", error);
+    console.error("Kıvıl AI chat error:", error);
+
     return res.status(500).json({
       error: "Sunucuda bir hata oluştu."
     });
