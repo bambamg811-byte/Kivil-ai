@@ -1183,13 +1183,38 @@ async function saveCloudMessage(role, content) {
 
 /* YAPAY ZEKÂ */
 
+function showTyping(label = "Kıvıl düşünüyor") {
+  document.getElementById("typing")?.remove();
+
+  const typing = document.createElement("div");
+  typing.id = "typing";
+  typing.className = "typing";
+  typing.textContent = label + "...";
+
+  document.getElementById("chatInner").appendChild(typing);
+
+  const chat = document.getElementById("chat");
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function resizeInput() {
+  const input = document.getElementById("input");
+  input.style.height = "auto";
+  input.style.height = Math.min(input.scrollHeight, 180) + "px";
+}
+
 async function sendMessage(text) {
   text = text.trim();
+
   if (!text || sending) return;
 
   sending = true;
-  $("sendBtn").disabled = true;
-  $("input").disabled = true;
+
+  const input = document.getElementById("input");
+  const sendBtn = document.getElementById("sendBtn");
+
+  sendBtn.disabled = true;
+  input.disabled = true;
 
   addMessage("user", text);
   await saveCloudMessage("user", text);
@@ -1204,9 +1229,9 @@ async function sendMessage(text) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        messages: messages.slice(-20).map(m => ({
-          role: m.role,
-          content: m.content
+        messages: messages.slice(-20).map(message => ({
+          role: message.role,
+          content: message.content
         }))
       })
     });
@@ -1214,14 +1239,14 @@ async function sendMessage(text) {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || "API hatası");
+      throw new Error(data.error || "API hatası: " + response.status);
     }
 
     if (!data.reply) {
-      throw new Error("Yanıt alınamadı.");
+      throw new Error("Yapay zekâdan boş yanıt geldi.");
     }
 
-    $("typing")?.remove();
+    document.getElementById("typing")?.remove();
 
     messages.push({
       role: "assistant",
@@ -1230,10 +1255,11 @@ async function sendMessage(text) {
 
     renderChat();
     saveLocal();
+
     await saveCloudMessage("assistant", data.reply);
 
   } catch (error) {
-    $("typing")?.remove();
+    document.getElementById("typing")?.remove();
 
     messages.push({
       role: "assistant",
@@ -1245,9 +1271,11 @@ async function sendMessage(text) {
 
   } finally {
     sending = false;
-    $("sendBtn").disabled = false;
-    $("input").disabled = false;
+    sendBtn.disabled = false;
+    input.disabled = false;
+
     setStatus("Hazır");
+    input.focus();
   }
 }
 
