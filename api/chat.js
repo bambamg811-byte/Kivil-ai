@@ -4,11 +4,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "POST isteği gerekli." });
   }
 
-  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
 
   if (!apiKey) {
     return res.status(500).json({
-      error: "Google AI anahtarı Vercel ayarlarında bulunamadı."
+      error: "GROQ_API_KEY Vercel ayarlarında bulunamadı."
     });
   }
 
@@ -17,7 +17,7 @@ export default async function handler(req, res) {
       ? req.body.messages
       : [];
 
-    const contents = messages
+    const chatMessages = messages
       .filter(m =>
         m &&
         ["user", "assistant"].includes(m.role) &&
@@ -25,58 +25,59 @@ export default async function handler(req, res) {
       )
       .slice(-20)
       .map(m => ({
-        role: m.role === "assistant" ? "model" : "user",
-        parts: [{ text: m.content.slice(0, 8000) }]
+        role: m.role === "assistant" ? "assistant" : "user",
+        content: m.content.slice(0, 8000)
       }));
 
-    if (!contents.length || contents[contents.length - 1].role !== "user") {
+    if (
+      !chatMessages.length ||
+      chatMessages[chatMessages.length - 1].role !== "user"
+    ) {
       return res.status(400).json({ error: "Önce bir mesaj yaz." });
     }
 
     const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
+      "https://api.groq.com/openai/v1/chat/completions",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-goog-api-key": apiKey
+          Authorization: `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          systemInstruction: {
-            parts: [{
-              text: "Sen Kıvıl AI adlı, Türkçe konuşan, samimi ve faydalı bir yapay zekâ asistanısın. Açık, doğru ve doğal cevaplar ver. Emin olmadığında bunu belirt."
-            }]
-          },
-          contents,
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 1200
-          }
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            {
+              role: "system",
+              content:
+                "Sen Kıvıl AI adlı, Türkçe konuşan, samimi ve faydalı bir yapay zekâ asistanısın. Açık, doğru ve doğal cevaplar ver. Emin olmadığında bunu belirt."
+            },
+            ...chatMessages
+          ],
+          temperature: 0.7,
+          max_tokens: 1200
         })
       }
     );
 
     const data = await response.json();
 
-  if (!response.ok) {
-  const googleMessage = data?.error?.message || "Bilinmeyen Google API hatası";
-  console.error("Google AI API error:", response.status, googleMessage);
-  return res.status(502).json({
-    error: `Google API (${response.status}): ${googleMessage}`
-  });
-  }
+    if (!response.ok) {
+      console.error("Groq API error:", response.status, data?.error?.message);
+      return res.status(502).json({
+        error: `Groq API (${response.status}): ${
+          data?.error?.message || "Bilinmeyen API hatası"
+        }`
+      });
+    }
 
-    const reply = data?.candidates?.[0]?.content?.parts
-      ?.map(part => part.text || "")
-      .join("")
-      .trim();
+    const reply = data?.choices?.[0]?.message?.content?.trim();
 
     if (!reply) {
       return res.status(502).json({ error: "Yanıt oluşturulamadı." });
     }
 
     return res.status(200).json({ reply });
-
   } catch (error) {
     console.error("Kıvıl AI error:", error);
     return res.status(500).json({ error: "Sunucuda bir hata oluştu." });
