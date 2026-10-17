@@ -1,81 +1,28 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kıvıl AI</title>
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1020"><title>Kıvıl AI</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#0b1020;color:#f5f6ff;font-family:Arial,sans-serif;min-height:100vh;display:flex;justify-content:center;align-items:center}
-.app{width:100%;max-width:700px;padding:20px}
-header{text-align:center;padding:20px}
-.logo{font-size:48px}
-h1{margin:5px;font-size:32px}
-header p{color:#9eacc8}
-#messages{height:55vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:10px}
-.msg{padding:13px 16px;border-radius:16px;background:#19243b;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}
-.user{background:#6255d9;align-self:flex-end;max-width:90%}
-form{display:flex;gap:8px;margin-top:10px}
-input{flex:1;min-width:0;padding:15px;border:1px solid #33415f;border-radius:14px;background:#141d30;color:white;font-size:16px}
-button{padding:12px 18px;border:0;border-radius:14px;background:#8b7cff;color:#101225;font-weight:bold;font-size:16px}
-footer{text-align:center;color:#75839f;font-size:12px;margin-top:16px}
-</style>
-</head>
-<body>
-<div class="app">
-<header>
-<div class="logo">✦</div>
-<h1>Kıvıl AI</h1>
-<p>Merak ettiğin her şey için yanında.</p>
-</header>
-<div id="messages">
-<div class="msg">Selam! Ben Kıvıl AI. Sana nasıl yardımcı olabilirim? 🤖</div>
-</div>
-<form id="form">
-<input id="prompt" placeholder="Kıvıl'a bir şey sor..." required>
-<button id="send">Gönder</button>
-</form>
-<footer>Kıvıl AI · Yapay zekâ asistanın</footer>
-</div>
-<script>
-const form=document.getElementById('form');
-const input=document.getElementById('prompt');
-const messages=document.getElementById('messages');
-const send=document.getElementById('send');
-
-form.addEventListener('submit',async function(e){
-e.preventDefault();
-const text=input.value.trim();
-if(!text)return;
-
-const user=document.createElement('div');
-user.className='msg user';
-user.textContent=text;
-messages.appendChild(user);
-
-input.value='';
-send.disabled=true;
-
-const answer=document.createElement('div');
-answer.className='msg';
-answer.textContent='Kıvıl düşünüyor...';
-messages.appendChild(answer);
-
-try{
-const response=await fetch('/api/chat',{
-method:'POST',
-headers:{'Content-Type':'application/json'},
-body:JSON.stringify({messages:[{role:'user',content:text}]})
-});
-const data=await response.json();
-if(!response.ok)throw new Error(data.error||'Bir hata oluştu.');
-answer.textContent=data.reply||'Cevap alınamadı.';
-}catch(error){
-answer.textContent='Bağlantı hatası: '+error.message;
-}
-send.disabled=false;
-messages.scrollTop=messages.scrollHeight;
-});
-</script>
-</body>
-</html>
+:root{--bg:#0b1020;--panel:#151f34;--line:#2b3854;--text:#f5f7ff;--muted:#9ba8c4;--a:#8b7cff}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px system-ui,Arial;height:100dvh}button,input,textarea{font:inherit}button{cursor:pointer;border:0}.app{display:grid;grid-template-columns:255px 1fr;height:100dvh}.side{background:#080d19;border-right:1px solid #202b42;padding:15px;display:flex;flex-direction:column;gap:12px;min-height:0}.brand{font-size:21px;font-weight:800;padding:6px}.star{color:#b7afff}.btn,.item{padding:11px;border:1px solid var(--line);border-radius:12px;background:#151f34;color:white;text-align:left}.history{overflow:auto;display:grid;gap:5px}.item{border-color:transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;padding:8px}.item.active{background:#27324d}.bottom{margin-top:auto;display:grid;gap:7px}.account{border-top:1px solid #26314a;padding:12px 4px;color:var(--muted);font-size:12px}.main{display:flex;flex-direction:column;min-width:0;height:100dvh}.top{height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid #202b42}.pill{background:#18233a;border:1px solid var(--line);color:white;border-radius:10px;padding:8px 11px}.primary{background:var(--a);color:#111127;font-weight:800;border:0}.chat{flex:1;overflow:auto;padding:20px 14px}.welcome{max-width:720px;text-align:center;margin:6vh auto 22px}.welcome h1{font-size:clamp(30px,5vw,42px);margin:0}.welcome p{color:var(--muted)}.cards{display:grid;grid-template-columns:1fr 1fr;gap:9px;text-align:left}.card{background:var(--panel);color:white;border:1px solid var(--line);border-radius:13px;padding:13px}.card small{display:block;color:var(--muted);margin-top:4px}.msgs{max-width:800px;margin:auto;display:grid;gap:18px}.row{display:flex;gap:10px;align-items:flex-start}.row.user{flex-direction:row-reverse}.avatar{width:30px;height:30px;flex:0 0 30px;display:grid;place-items:center;border-radius:10px;background:#202b42}.bubble{white-space:pre-wrap;overflow-wrap:anywhere;max-width:85%;padding:13px 15px;border-radius:17px;background:var(--panel);line-height:1.5}.user .bubble{background:#6255d9}.tools{display:flex;gap:5px;margin-top:5px}.tiny{background:transparent;color:var(--muted);font-size:12px;padding:4px}.composer-wrap{padding:10px 12px calc(12px + env(safe-area-inset-bottom))}.composer{max-width:800px;margin:auto;display:flex;align-items:flex-end;gap:7px;background:#131d31;border:1px solid #34415f;border-radius:17px;padding:8px}.composer textarea{flex:1;min-width:0;resize:none;max-height:140px;min-height:42px;padding:10px 5px;color:white;background:transparent;border:0;outline:0}.icon{width:40px;height:40px;border-radius:11px;background:#202b42;color:white}.send{background:var(--a);color:#111127;font-weight:bold}.hint{text-align:center;color:#74819e;font-size:11px;margin:8px}.back{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;padding:15px}.back.open{display:flex}.modal{width:min(420px,100%);background:#111a2d;border:1px solid var(--line);border-radius:18px;padding:20px}.modal input{width:100%;padding:12px;margin:6px 0;background:#0b1020;border:1px solid var(--line);border-radius:10px;color:white}.status{font-size:12px;color:#ffd18c;min-height:20px}@media(max-width:700px){.app{grid-template-columns:1fr}.side{position:fixed;z-index:4;inset:0 auto 0 0;width:270px;transform:translateX(-105%);transition:.2s;box-shadow:20px 0 50px #0008}.side.open{transform:translateX(0)}.menu{display:inline-block!important}.top{padding:0 10px}.chat{padding:15px 10px}.welcome{margin-top:5vh}.cards{grid-template-columns:1fr}.card:nth-child(n+3){display:none}.composer{gap:4px}.icon{width:37px;height:37px}.bubble{max-width:88%}}
+</style></head><body><div class="app">
+<aside class="side" id="side"><div class="brand"><span class="star">✦</span> Kıvıl AI</div><button class="btn" id="new">＋ Yeni sohbet</button><small style="color:var(--muted)">SOHBET GEÇMİŞİ · BU CİHAZDA</small><div class="history" id="history"></div><div class="bottom"><button class="btn" id="voice">🔊 Sesli cevap: açık</button><button class="btn" id="login">👤 Giriş yap / Kayıt ol</button><button class="btn" id="clear">⌫ Geçmişi temizle</button></div><div class="account" id="account">Misafir kullanıcı<br>Geçmiş bu cihazda saklanır</div></aside>
+<main class="main"><header class="top"><div><button class="pill menu" id="menu" style="display:none">☰</button> <b>Kıvıl AI</b> <span style="color:var(--muted)">/ sohbet</span></div><button class="pill primary" id="topLogin">Giriş yap</button></header>
+<section class="chat" id="chat"><div class="welcome" id="welcome"><div class="star" style="font-size:45px">✦</div><h1>Ne düşünüyorsun?</h1><p>Sorunu yaz, birlikte çözelim.</p><div class="cards"><button class="card" data-p="Bilgisayarımı oyunlar için hızlandırmak istiyorum.">🎮 PC ve oyunlar<small>Performans önerileri</small></button><button class="card" data-p="Bana eğlenceli bir web sitesi fikri ver.">💡 Bir fikir bul<small>Yeni bir şey tasarlayalım</small></button><button class="card" data-p="Bir konuyu kolay ve örneklerle açıkla.">📚 Bir şey öğren<small>Adım adım açıklama</small></button><button class="card" data-p="Bana küçük bir JavaScript oyunu yap.">💻 Kod yaz<small>Bir projeye başlayalım</small></button></div></div><div class="msgs" id="msgs"></div></section>
+<div class="composer-wrap"><form class="composer" id="form"><button type="button" class="icon" id="mic" title="Sesle yaz">🎙</button><textarea id="prompt" rows="1" placeholder="Kıvıl'a bir şey sor..." required></textarea><button type="button" class="icon" id="speak" title="Sesli cevap aç/kapat">🔊</button><button class="icon send">➤</button></form><div class="hint">Kıvıl AI hata yapabilir. Önemli bilgileri kontrol et.</div></div></main></div>
+<div class="back" id="back"><div class="modal"><div style="display:flex;justify-content:space-between"><h2 id="authTitle">Giriş yap</h2><button class="pill" id="close">✕</button></div><p style="color:var(--muted)">Gerçek hesap girişi için Supabase ayarları eklenmelidir.</p><form id="auth"><input type="email" id="email" placeholder="E-posta" required><input type="password" id="password" placeholder="Şifre (en az 6 karakter)" minlength="6" required><div class="status" id="status"></div><button class="pill primary" type="submit" id="submit">Giriş yap</button> <button class="pill" type="button" id="switch">Kayıt ol</button></form></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
+/* Supabase projesi oluşturunca bu iki değeri doldur. service_role anahtarını asla kullanma. */
+const SUPABASE_URL="",SUPABASE_ANON_KEY="";
+const sb=(SUPABASE_URL&&SUPABASE_ANON_KEY&&window.supabase)?window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
+const $=id=>document.getElementById(id);let chats=JSON.parse(localStorage.getItem("kivil_chats_v1")||"[]"),id=null,busy=false,voiceOn=localStorage.getItem("kivil_voice")!=="off",user=null,mode="login";
+function active(){return chats.find(c=>c.id===id)}function save(){localStorage.setItem("kivil_chats_v1",JSON.stringify(chats));drawHistory()}
+function fresh(){id=crypto.randomUUID?crypto.randomUUID():String(Date.now());chats.unshift({id,title:"Yeni sohbet",messages:[],updated:Date.now()});save();drawMsgs();if(innerWidth<701)$("side").classList.remove("open")}
+function drawHistory(){$("history").innerHTML="";[...chats].sort((a,b)=>b.updated-a.updated).forEach(c=>{let b=document.createElement("button");b.className="item"+(c.id===id?" active":"");b.textContent="▸ "+c.title;b.onclick=()=>{id=c.id;drawMsgs();if(innerWidth<701)$("side").classList.remove("open")};$("history").append(b)})}
+function bubble(role,text){let row=document.createElement("div");row.className="row "+role;let av=document.createElement("div");av.className="avatar";av.textContent=role==="user"?"K":"✦";let wrap=document.createElement("div"),b=document.createElement("div");b.className="bubble";b.textContent=text;wrap.append(b);row.append(av,wrap);$("msgs").append(row);return b}
+function addTools(b,text){let t=document.createElement("div");t.className="tools";let cp=document.createElement("button");cp.className="tiny";cp.textContent="Kopyala";cp.onclick=()=>navigator.clipboard?.writeText(text);let sp=document.createElement("button");sp.className="tiny";sp.textContent="🔊 Seslendir";sp.onclick=()=>say(text);t.append(cp,sp);b.parentElement.append(t)}
+function drawMsgs(){$("msgs").innerHTML="";let c=active();$("welcome").style.display=c&&c.messages.length?"none":"block";if(c)c.messages.forEach(m=>{let b=bubble(m.role,m.content);if(m.role==="assistant")addTools(b,m.content)});$("chat").scrollTop=$("chat").scrollHeight;drawHistory()}
+function say(t){if(!("speechSynthesis"in window)){alert("Sesli okuma bu tarayıcıda desteklenmiyor.");return}speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(t);u.lang="tr-TR";speechSynthesis.speak(u)}
+function setVoice(v){voiceOn=v;localStorage.setItem("kivil_voice",v?"on":"off");$("voice").textContent="🔊 Sesli cevap: "+(v?"açık":"kapalı");$("speak").textContent=v?"🔊":"🔇"}
+$("form").onsubmit=async e=>{e.preventDefault();if(busy)return;let text=$("prompt").value.trim();if(!text)return;if(!id||!active())fresh();let c=active();c.messages.push({role:"user",content:text});if(c.messages.length===1)c.title=text.slice(0,40);c.updated=Date.now();$("welcome").style.display="none";bubble("user",text);$("prompt").value="";$("prompt").style.height="auto";let b=bubble("assistant","Kıvıl düşünüyor...");busy=true;save();try{let r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:c.messages.slice(-20)})});let raw=await r.text(),d;try{d=JSON.parse(raw)}catch{throw Error("Sunucu JSON döndürmedi: "+raw.slice(0,120))}if(!r.ok)throw Error(d.error||"HTTP "+r.status);let answer=d.reply||"Cevap alınamadı.";b.textContent=answer;addTools(b,answer);c.messages.push({role:"assistant",content:answer});c.updated=Date.now();save();if(voiceOn)say(answer)}catch(err){b.textContent="Hata: "+err.message}finally{busy=false;$("chat").scrollTop=$("chat").scrollHeight}};
+$("new").onclick=fresh;$("clear").onclick=()=>{if(confirm("Bu cihazdaki sohbet geçmişi silinsin mi?")){chats=[];id=null;save();drawMsgs()}};$("voice").onclick=() =>setVoice(!voiceOn);$("speak").onclick=()=>setVoice(!voiceOn);$("menu").onclick=()=>$("side").classList.toggle("open");$("close").onclick=()=>$("back").classList.remove("open");$("login").onclick=$("topLogin").onclick=()=>{$("back").classList.add("open");$("status").textContent=""};$("switch").onclick=()=>{mode=mode==="login"?"signup":"login";$("authTitle").textContent=mode==="login"?"Giriş yap":"Kayıt ol";$("submit").textContent=mode==="login"?"Giriş yap":"Kayıt ol";$("switch").textContent=mode==="login"?"Kayıt ol":"Giriş yap"};
+$("auth").onsubmit=async e=>{e.preventDefault();if(!sb){$("status").textContent="Supabase ayarları henüz eklenmedi. Kurulum dosyasındaki adımları izle.";return}let res=mode==="signup"?await sb.auth.signUp({email:$("email").value,password:$("password").value}):await sb.auth.signInWithPassword({email:$("email").value,password:$("password").value});$("status").textContent=res.error?res.error.message:(mode==="signup"?"Kayıt oluşturuldu. E-posta onayı gerekebilir.":"Giriş başarılı.");if(!res.error){user=res.data.user;$("account").textContent=user?.email||"Kullanıcı";$("login").textContent="👤 Çıkış yap";$("topLogin").textContent="Çıkış yap";setTimeout(()=>$("back").classList.remove("open"),700)}};
+$("mic").onclick=()=>{let SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert("Tarayıcı sesle yazmayı desteklemiyor. Klavyenin mikrofonunu deneyebilirsin.");return}let r=new SR();r.lang="tr-TR";r.onresult=e=>{$("prompt").value+=($("prompt").value?" ":"")+e.results[0][0].transcript};r.onerror=()=>alert("Mikrofon iznini kontrol et.");r.start()};
+$("prompt").oninput=()=>{$("prompt").style.height="auto";$("prompt").style.height=Math.min($("prompt").scrollHeight,140)+"px"};$("prompt").onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();$("form").requestSubmit()}};document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{$("prompt").value=b.dataset.p;$("prompt").focus()});setVoice(voiceOn);if(chats.length){id=[...chats].sort((a,b)=>b.updated-a.updated)[0].id;drawMsgs()}else{drawHistory();drawMsgs()}if(sb)sb.auth.getUser().then(({data})=>{user=data.user;if(user){$("account").textContent=user.email;$("login").textContent="👤 Çıkış yap";$("topLogin").textContent="Çıkış yap"}});
+</script></body></html>
