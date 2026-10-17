@@ -775,6 +775,218 @@
       return paragraph.outerHTML;
     }
 
+function enhanceMessage(body) {
+  if (typeof renderMathInElement === "function") {
+    renderMathInElement(body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "\\[", right: "\\]", display: true },
+        { left: "\\(", right: "\\)", display: false }
+      ],
+      throwOnError: false
+    });
+  }
+
+  body.querySelectorAll("pre > code").forEach((code) => {
+    const type = [...code.classList]
+      .find((name) => name.startsWith("language-"))
+      ?.replace("language-", "");
+
+    if (!["chart", "geometry", "3d"].includes(type)) return;
+
+    let data;
+    try {
+      data = JSON.parse(code.textContent);
+    } catch {
+      return;
+    }
+
+    const card = document.createElement("section");
+    card.className = "kivil-visual";
+
+    const title = document.createElement("div");
+    title.className = "kivil-visual-title";
+    title.textContent = data.title || "Kıvıl AI Görseli";
+    card.appendChild(title);
+
+    const note = document.createElement("div");
+    note.className = "kivil-visual-note";
+
+    if (type === "chart") {
+      if (typeof Chart !== "function") return;
+
+      const area = document.createElement("div");
+      area.className = "kivil-chart";
+
+      const canvas = document.createElement("canvas");
+      area.appendChild(canvas);
+      card.appendChild(area);
+
+      const labels = Array.isArray(data.labels) ? data.labels : [];
+      const datasets = Array.isArray(data.datasets)
+        ? data.datasets
+        : [];
+
+      if (!labels.length || !datasets.length) return;
+
+      new Chart(canvas, {
+        type: ["bar", "line", "pie", "doughnut"].includes(data.type)
+          ? data.type
+          : "bar",
+        data: {
+          labels,
+          datasets: datasets.map((set) => ({
+            label: String(set.label || "Değer"),
+            data: Array.isArray(set.data) ? set.data : []
+          }))
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: { color: "#f4f4ff" }
+            }
+          },
+          scales: ["pie", "doughnut"].includes(data.type)
+            ? {}
+            : {
+                x: { ticks: { color: "#c7c9df" } },
+                y: { ticks: { color: "#c7c9df" }, beginAtZero: true }
+              }
+        }
+      });
+    }
+
+    if (type === "geometry") {
+      const area = document.createElement("div");
+      area.className = "kivil-geometry";
+
+      const svg = document.createElementNS(
+        "http://www.w3.org/2000/svg", "svg"
+      );
+      svg.setAttribute("viewBox", "0 0 320 220");
+
+      const shapes = {
+        triangle: '<polygon points="160,25 45,190 275,190"/>',
+        circle: '<circle cx="160" cy="110" r="78"/>',
+        square: '<rect x="82" y="32" width="156" height="156"/>',
+        rectangle: '<rect x="45" y="60" width="230" height="100"/>'
+      };
+
+      const shape = shapes[data.shape];
+      if (!shape) return;
+
+      svg.innerHTML = shape;
+      svg.querySelector("*").setAttribute("fill", "#9270ff");
+      svg.querySelector("*").setAttribute("fill-opacity", "0.25");
+      svg.querySelector("*").setAttribute("stroke", "#35d9ff");
+      svg.querySelector("*").setAttribute("stroke-width", "3");
+
+      area.appendChild(svg);
+      card.appendChild(area);
+
+      if (data.description) {
+        note.textContent = data.description;
+        card.appendChild(note);
+      }
+    }
+
+    if (type === "3d") {
+      if (!window.THREE) {
+        note.textContent = "3D kütüphanesi yüklenemedi.";
+        card.appendChild(note);
+      } else {
+        const area = document.createElement("div");
+        area.className = "kivil-3d";
+        card.appendChild(area);
+
+        try {
+          const scene = new THREE.Scene();
+          const camera = new THREE.PerspectiveCamera(
+            45, 1, 0.1, 100
+          );
+          camera.position.z = 4;
+
+          const renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true
+          });
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+          area.appendChild(renderer.domElement);
+
+          const color = /^#[0-9a-fA-F]{6}$/.test(data.color || "")
+            ? data.color
+            : "#9270ff";
+
+          const geometries = {
+            cube: () => new THREE.BoxGeometry(1.4, 1.4, 1.4),
+            sphere: () => new THREE.SphereGeometry(0.9, 32, 24),
+            cone: () => new THREE.ConeGeometry(0.8, 1.6, 32),
+            torus: () => new THREE.TorusGeometry(0.75, 0.28, 16, 80),
+            cylinder: () => new THREE.CylinderGeometry(0.65, 0.65, 1.5, 32)
+          };
+
+          const makeGeometry = geometries[data.shape];
+          if (!makeGeometry) {
+            note.textContent = "Desteklenmeyen 3D şekli.";
+            card.appendChild(note);
+            return;
+          }
+
+          const mesh = new THREE.Mesh(
+            makeGeometry(),
+            new THREE.MeshStandardMaterial({
+              color,
+              metalness: 0.35,
+              roughness: 0.3
+            })
+          );
+          scene.add(mesh);
+          scene.add(new THREE.AmbientLight(0xffffff, 1.4));
+
+          const light = new THREE.DirectionalLight(0xffffff, 2);
+          light.position.set(3, 4, 5);
+          scene.add(light);
+
+          function resize() {
+            const w = Math.max(area.clientWidth, 1);
+            const h = Math.max(area.clientHeight, 1);
+            renderer.setSize(w, h, false);
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+          }
+
+          resize();
+
+          let frame;
+          function animate() {
+            frame = requestAnimationFrame(animate);
+            mesh.rotation.x += 0.005;
+            mesh.rotation.y += 0.009;
+            renderer.render(scene, camera);
+          }
+          animate();
+
+          if (window.ResizeObserver) {
+            new ResizeObserver(resize).observe(area);
+          }
+
+          area.addEventListener("DOMNodeRemoved", () => {
+            cancelAnimationFrame(frame);
+            renderer.dispose();
+          }, { once: true });
+        } catch (error) {
+          note.textContent = "Bu cihazda 3D görsel oluşturulamadı.";
+          card.appendChild(note);
+        }
+      }
+    }
+
+    code.parentElement.replaceWith(card);
+  });
+}
+
     function addMessage(role, content, scroll = true) {
       const row = document.createElement("article");
       row.className = "message " + (role === "user" ? "user" : "assistant");
@@ -793,7 +1005,7 @@
       const body = document.createElement("div");
       body.className = "message-body";
       body.innerHTML = renderMarkdown(content);
-
+      enhanceMessage(body);
       bodyWrap.append(name, body);
       row.append(avatar, bodyWrap);
       messageList.appendChild(row);
