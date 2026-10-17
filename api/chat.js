@@ -152,7 +152,7 @@ DUYGU VE KİŞİLİK:
           messages: [
             {
               role: "system",
-              content: `$DIL1$DIL2`
+              content: systemPrompt + researchInstructions
             },
             ...chatMessages
           ],
