@@ -13,24 +13,7 @@ export default async function handler(req, res) {
       error: "GROQ_API_KEY Vercel ayarlarında bulunamadı."
     });
   }
-const currentDate = new Intl.DateTimeFormat("tr-TR", {
-  timeZone: "Europe/Istanbul",
-  dateStyle: "full"
-}).format(new Date());
-
-   const researchMode = req.body?.mode === "research";
-
-try {
-  const messages = Array.isArray(req.body?.messages)
-    ? req.body.messages
-    : [];
-
-  const currentDate = new Intl.DateTimeFormat("tr-TR", {
-    timeZone: "Europe/Istanbul",
-    dateStyle: "full"
-  }).format(new Date());
-
- const researchMode = req.body?.mode === "research";
+const researchMode = req.body?.mode === "research";
 
 try {
   const messages = Array.isArray(req.body?.messages)
