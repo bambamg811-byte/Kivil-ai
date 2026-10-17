@@ -83,11 +83,10 @@ export default async function handler(req, res) {
     console.error("Image generation error:", error);
 
     return res.status(500).json({
-      error: "Görsel oluşturulurken sunucu hatası oluştu."
+          error: "Resim servisine bağlanırken hata oluştu."
     });
   }
 }
-
       error: "Resim servisine bağlanırken hata oluştu."
     });
   }
