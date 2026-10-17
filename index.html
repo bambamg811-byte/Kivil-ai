@@ -48,7 +48,9 @@ function setMode(next) {
     mode === 'image' ? 'Görsel oluştur' :
     mode === 'research' ? 'Araştır' : 'Gönder'
   );
-}){function setMode(next) {
+  );
+}
+function renderHistory(){
   mode = ['chat', 'image', 'research'].includes(next) ? next : 'chat';
 
   chatModeBtn.classList.toggle('active', mode === 'chat');
