@@ -13,7 +13,7 @@ export default async function handler(req, res) {
       error: "GROQ_API_KEY Vercel ayarlarında bulunamadı."
     });
   }
-
+const researchMode = req.body?.mode === "research";
   try {
     const messages = Array.isArray(req.body?.messages)
       ? req.body.messages
@@ -39,7 +39,21 @@ export default async function handler(req, res) {
         error: "Önce bir mesaj yaz."
       });
     }
+const researchInstructions = researchMode ? `
 
+İNTERNET ARAŞTIRMA MODU:
+- Güncel sorular için browser_search aracını gerçekten kullan.
+- Güncel haberleri ve tarih gerektiren bilgileri aramadan tahmin etme.
+- Önemli bilgileri mümkün olduğunca birden fazla güvenilir kaynakla doğrula.
+- Olay tarihi ile haberin yayımlanma tarihini ayırt et.
+- Cevabı kullanıcının dilinde ver.
+- Sonunda Kaynaklar bölümü oluştur.
+- Kaynak başlıklarını ve gerçek URL adreslerini Markdown
+  bağlantıları olarak göster.
+- URL, kaynak veya tarih uydurma.
+- Arama başarısız olursa internet araştırmasının başarısız
+  olduğunu açıkça belirt; güncel bilgi uydurma.
+` : "";
     const systemPrompt = `
 Sen Kıvıl AI adlı, Türkçe konuşan, samimi ve faydalı bir yapay zekâ asistanısın.
 
@@ -130,10 +144,15 @@ DUYGU VE KİŞİLİK:
         },
         body: JSON.stringify({
           model: "openai/gpt-oss-20b",
+...(researchMode ? {
+  tools: [{ type: "browser_search" }],
+  tool_choice: "required",
+  citation_options: "enabled"
+} : {}),
           messages: [
             {
               role: "system",
-              content: systemPrompt
+              content: `$DIL1$DIL2`
             },
             ...chatMessages
           ],
