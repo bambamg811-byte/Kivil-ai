@@ -12,20 +12,86 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
+<!-- Markdown ve güvenli HTML -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
 
+<!-- Matematik formülleri -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+<!-- Grafikler -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+<!-- 3D modeller -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
   <style>
-    :root {
-      --bg: #080914;
-      --panel: #101222;
-      --panel2: #15182b;
-      --border: rgba(157, 151, 255, .15);
-      --purple: #9270ff;
-      --blue: #35d9ff;
-      --text: #f4f4ff;
-      --muted: #9296b3;
-    }
+  /* Kıvıl AI görsel bileşenleri */
+.kivil-visual {
+  width: 100%;
+  margin: 14px 0;
+  padding: 15px;
+  overflow: hidden;
+  border: 1px solid rgba(146, 112, 255, .3);
+  border-radius: 14px;
+  background: linear-gradient(145deg, #111427, #090b16);
+}
+
+.kivil-visual-title {
+  margin-bottom: 12px;
+  color: #c9bdff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.kivil-chart {
+  position: relative;
+  width: 100%;
+  height: 300px;
+}
+
+.kivil-geometry {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 220px;
+}
+
+.kivil-geometry svg {
+  width: 100%;
+  max-width: 420px;
+  max-height: 320px;
+}
+
+.kivil-3d {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: radial-gradient(ellipse at center, #202344, #080914 75%);
+}
+
+.kivil-3d canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: pan-y;
+}
+
+.kivil-visual-note {
+  margin-top: 9px;
+  color: #9296b3;
+  font-size: 11px;
+}
+
+@media (max-width: 600px) {
+  .kivil-visual { padding: 10px; }
+  .kivil-chart { height: 250px; }
+  .kivil-3d { height: 260px; }
+}
 
     * { box-sizing: border-box; }
 
