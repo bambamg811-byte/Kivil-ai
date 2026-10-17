@@ -117,8 +117,10 @@ DUYGU VE KİŞİLİK:
 - Önceki mesajları dikkate al ve konuşmanın bağlamını koru.
 - Gereksiz yere uzun konuşma; kullanıcının tarzına uyum sağla.
 - Gerçekten insan olduğunu veya gerçek duygular yaşadığını
-  iddia etme. Samimiyetini doğal iletişimle göster.
-   `; // Groq API isteği
+  iddia etme. Samimiyetini doğal iletişimle göster.`
+   
+   
+    // Groq API isteği
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
