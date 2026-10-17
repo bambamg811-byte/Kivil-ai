@@ -25,9 +25,7 @@ function loadChats(){try{const v=JSON.parse(localStorage.getItem(STORAGE_KEY)||'
 }
 
 function setMode(next) {
-  mode = ['chat', 'image', 'research'].includes(next)
-    ? next
-    : 'chat';
+  mode = ['chat', 'image', 'research'].includes(next) ? next : 'chat';
 
   chatModeBtn.classList.toggle('active', mode === 'chat');
   imageModeBtn.classList.toggle('active', mode === 'image');
@@ -47,7 +45,6 @@ function setMode(next) {
     'aria-label',
     mode === 'image' ? 'Görsel oluştur' :
     mode === 'research' ? 'Araştır' : 'Gönder'
-  );
   );
 }
 function renderHistory(){
