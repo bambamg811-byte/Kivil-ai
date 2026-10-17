@@ -47,47 +47,6 @@ function setMode(next) {
     mode === 'research' ? 'Araştır' : 'Gönder'
   );
 }
-function renderHistory(){historyEl.replaceChildren();
-
-  chatModeBtn.classList.toggle('active', mode === 'chat');
-  imageModeBtn.classList.toggle('active', mode === 'image');
-  researchModeBtn.classList.toggle('active', mode === 'research');
-
-  modeNote.textContent =
-    mode === 'image' ? 'Cloudflare FLUX ile görsel' :
-    mode === 'research' ? 'Groq ile internet araştırması' :
-    'Groq ile sohbet';
-
-  promptEl.placeholder =
-    mode === 'image' ? 'Nasıl bir görsel oluşturalım?' :
-    mode === 'research' ? 'Hangi konuyu araştıracaksın?' :
-    'Kıvıl AI’a bir şey sor...';
-
-  sendBtn.setAttribute(
-    'aria-label',
-    mode === 'image' ? 'Görsel oluştur' :
-    mode === 'research' ? 'Araştır' : 'Gönder'
-  );
-}
-  imageModeBtn.classList.toggle('active', mode === 'image');
-  researchModeBtn.classList.toggle('active', mode === 'research');
-
-  modeNote.textContent =
-    mode === 'image' ? 'Cloudflare FLUX ile görsel' :
-    mode === 'research' ? 'Groq ile internet araştırması' :
-    'Groq ile sohbet';
-
-  promptEl.placeholder =
-    mode === 'image' ? 'Nasıl bir görsel oluşturalım?' :
-    mode === 'research' ? 'Hangi konuyu araştıracaksın?' :
-    'Kıvıl AI’a bir şey sor...';
-
-  sendBtn.setAttribute(
-    'aria-label',
-    mode === 'image' ? 'Görsel oluştur' :
-    mode === 'research' ? 'Araştır' : 'Gönder'
-  );
-}
 function renderHistory(){historyEl.replaceChildren();const recent=[...chats].sort((a,b)=>b.updatedAt-a.updatedAt).slice(0,30);if(!recent.length){const e=document.createElement('div');e.textContent='Henüz sohbet yok';e.style.cssText='padding:8px 10px;color:#737b9d;font-size:12px';historyEl.append(e);return}for(const c of recent){const b=document.createElement('button');b.className='history-item'+(c.id===activeChatId?' active':'');b.textContent=c.title||'Yeni sohbet';b.addEventListener('click',()=>openChat(c.id));historyEl.append(b)}}function openChat(id){const c=chats.find(x=>x.id===id);if(!c)return;activeChatId=id;welcome.classList.add('hidden');messagesEl.classList.remove('hidden');messagesEl.replaceChildren();for(const m of c.messages){const r=addMessage(m.role,m.content,{scroll:false});if(m.role==='assistant'&&m.imageData)addImageToMessage(r,m.imageData,m.imageAlt||'Oluşturulan görsel');else if(m.role==='assistant'&&m.imageNote){const p=document.createElement('p');p.textContent='Görsel geçmişte yeniden açılabilir durumda değil; yeni bir görsel üretmek için isteği tekrar gönder.';r.body.append(p)}}renderHistory();scrollToBottom()}
 function addMessage(role,content,opts={}){const row=document.createElement('article');row.className='message '+(role==='user'?'user':'assistant');const av=document.createElement('div');av.className='avatar';av.textContent=role==='user'?'🙂':'✦';const wrap=document.createElement('div');wrap.className='bubble-wrap';const body=document.createElement('div');body.className='bubble';if(role==='assistant'&&window.marked&&window.DOMPurify){body.innerHTML=window.DOMPurify.sanitize(window.marked.parse(String(content||''),{breaks:true}),{USE_PROFILES:{html:true}});body.querySelectorAll('a').forEach(a=>{a.target='_blank';a.rel='noopener noreferrer'})}else body.textContent=String(content||'');wrap.append(body);row.append(av,wrap);messagesEl.append(row);if(opts.scroll!==false)scrollToBottom();return{row,body,wrap}}function showTyping(){const r=addMessage('assistant','',{scroll:false}),d=document.createElement('div');d.className='typing';d.innerHTML='<i></i><i></i><i></i>';r.body.append(d);scrollToBottom();return r}function scrollToBottom(){requestAnimationFrame(()=>window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}))}function setBusy(v){busy=v;sendBtn.disabled=v;promptEl.disabled=v;chatModeBtn.disabled=v;imageModeBtn.disabled=v;sendBtn.textContent=v?'…':'↑'}function addImageToMessage(r,dataUrl,alt){const img=document.createElement('img');img.className='msg-image';img.src=dataUrl;img.alt=alt||'Oluşturulan görsel';img.loading='eager';r.body.append(img);const actions=document.createElement('div');actions.className='image-actions';const a=document.createElement('a');a.className='small-btn';a.href=dataUrl;a.download='kivil-ai-gorsel.jpg';a.textContent='⬇ Görseli indir';actions.append(a);r.body.append(actions)}
 function looksLikeImageRequest(text){return /(?:resim|görsel|fotoğraf|illüstrasyon|çizim|logo|poster|duvar\s*kâğıdı|duvar\s*kağıdı|wallpaper|image|picture)\s*(?:oluştur|üret|yap|çiz|hazırla|generate|create|draw)?|(?:oluştur|üret|çiz|çizsene|hazırla|generate|create|draw)\s*(?:bana\s*)?(?:bir\s*)?(?:resim|görsel|fotoğraf|logo|poster|image|picture)|\b(?:çiz|çizsene|draw)\b/i.test(text)}
