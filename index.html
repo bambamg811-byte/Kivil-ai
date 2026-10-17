@@ -1066,4 +1066,323 @@ function renderChat() {
           }
         };
 
-        const s
+        const speak = document.createElement("button");
+speak.className = "action-btn";
+speak.textContent = "🔊 Sesli oku";
+
+speak.onclick = () => {
+  if (!("speechSynthesis" in window)) {
+    toast("Sesli okuma desteklenmiyor.");
+    return;
+  }
+
+  speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(message.content);
+  utterance.lang = "tr-TR";
+  speechSynthesis.speak(utterance);
+};
+
+actions.append(copy, speak);
+body.appendChild(actions);
+}
+
+row.append(avatar, body);
+root.appendChild(row);
+});
+}
+
+$("chat").scrollTop = $("chat").scrollHeight;
+
+root.querySelectorAll("[data-prompt]").forEach(button => {
+  button.onclick = () => {
+    $("input").value = button.dataset.prompt;
+    $("input").focus();
+    resizeInput();
+  };
+});
+}
+
+/* SOHBET HAFIZASI */
+
+async function loadCloudChats() {
+  if (!currentUser || !supabase) return;
+
+  const { data, error } = await supabase
+    .from("chat_messages")
+    .select("session_id, role, content, created_at")
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: true })
+    .limit(500);
+
+  if (error) {
+    console.error(error);
+    toast("Sohbetler yüklenemedi: " + error.message);
+    return;
+  }
+
+  const groups = new Map();
+
+  for (const row of data || []) {
+    if (!row.session_id) continue;
+
+    if (!groups.has(row.session_id)) {
+      groups.set(row.session_id, {
+        id: row.session_id,
+        title: "Yeni sohbet",
+        messages: [],
+        updatedAt: Date.now()
+      });
+    }
+
+    const chat = groups.get(row.session_id);
+
+    chat.messages.push({
+      role: row.role,
+      content: row.content
+    });
+
+    if (row.role === "user" && chat.title === "Yeni sohbet") {
+      chat.title = row.content.slice(0, 42);
+    }
+  }
+
+  chatList = [...groups.values()];
+  saveLocalChats();
+
+  if (chatList.length) {
+    chatList.sort((a, b) => b.updatedAt - a.updatedAt);
+    currentChatId = chatList[0].id;
+    messages = [...chatList[0].messages];
+  } else {
+    currentChatId = crypto.randomUUID();
+    messages = [];
+  }
+
+  renderHistory();
+  renderChat();
+}
+
+async function saveCloudMessage(role, content) {
+  if (!currentUser || !supabase) return;
+
+  const { error } = await supabase
+    .from("chat_messages")
+    .insert({
+      user_id: currentUser.id,
+      session_id: currentChatId,
+      role,
+      content
+    });
+
+  if (error) {
+    console.error("Supabase kayıt hatası:", error);
+    toast("Buluta kaydedilemedi.");
+  }
+}
+
+/* YAPAY ZEKÂ */
+
+async function sendMessage(text) {
+  text = text.trim();
+  if (!text || sending) return;
+
+  sending = true;
+  $("sendBtn").disabled = true;
+  $("input").disabled = true;
+
+  addMessage("user", text);
+  await saveCloudMessage("user", text);
+
+  showTyping();
+  setStatus("Yanıt hazırlanıyor...");
+
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        messages: messages.slice(-20).map(m => ({
+          role: m.role,
+          content: m.content
+        }))
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "API hatası");
+    }
+
+    if (!data.reply) {
+      throw new Error("Yanıt alınamadı.");
+    }
+
+    $("typing")?.remove();
+
+    messages.push({
+      role: "assistant",
+      content: data.reply
+    });
+
+    renderChat();
+    saveLocal();
+    await saveCloudMessage("assistant", data.reply);
+
+  } catch (error) {
+    $("typing")?.remove();
+
+    messages.push({
+      role: "assistant",
+      content: "Hata: " + error.message
+    });
+
+    renderChat();
+    saveLocal();
+
+  } finally {
+    sending = false;
+    $("sendBtn").disabled = false;
+    $("input").disabled = false;
+    setStatus("Hazır");
+  }
+}
+
+/* GİRİŞ VE KAYIT */
+
+function openAuth() {
+  $("authModal").classList.add("show");
+  $("authMessage").textContent = "";
+}
+
+function closeAuth() {
+  $("authModal").classList.remove("show");
+}
+
+async function handleAuth(mode) {
+  if (!supabase) {
+    toast("Supabase anahtarını kontrol et.");
+    return;
+  }
+
+  const email = $("email").value.trim();
+  const password = $("password").value;
+
+  $("authMessage").textContent = "İşlem yapılıyor...";
+
+  try {
+    const result = mode === "signup"
+      ? await supabase.auth.signUp({ email, password })
+      : await supabase.auth.signInWithPassword({ email, password });
+
+    if (result.error) throw result.error;
+
+    if (mode === "signup" && !result.data.session) {
+      $("authMessage").textContent =
+        "E-postanı kontrol et ve hesabını doğrula.";
+      return;
+    }
+
+    closeAuth();
+    toast("İşlem başarılı!");
+
+  } catch (error) {
+    $("authMessage").textContent = error.message;
+  }
+}
+
+async function applyUser(user) {
+  const previousId = currentUser?.id;
+  currentUser = user;
+
+  if (user) {
+    $("accountStatus").textContent = "Hesap: " + user.email;
+    $("loginBtn").hidden = true;
+    $("logoutBtn").hidden = false;
+
+    if (previousId !== user.id) {
+      await loadCloudChats();
+    }
+  } else {
+    $("accountStatus").textContent = "Misafir modu";
+    $("loginBtn").hidden = false;
+    $("logoutBtn").hidden = true;
+  }
+}
+
+/* BUTONLAR */
+
+$("newChatBtn").onclick = newChat;
+$("loginBtn").onclick = openAuth;
+$("closeAuth").onclick = closeAuth;
+
+$("signInBtn").onclick = () => handleAuth("signin");
+$("signUpBtn").onclick = () => handleAuth("signup");
+
+$("logoutBtn").onclick = async () => {
+  if (supabase) {
+    await supabase.auth.signOut();
+    toast("Çıkış yapıldı.");
+  }
+};
+
+$("chatForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const input = $("input");
+  const text = input.value.trim();
+
+  if (!text || sending) return;
+
+  input.value = "";
+  input.style.height = "auto";
+
+  await sendMessage(text);
+});
+
+$("input").addEventListener("keydown", event => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    $("chatForm").requestSubmit();
+  }
+});
+
+$("input").addEventListener("input", () => {
+  $("input").style.height = "auto";
+  $("input").style.height =
+    Math.min($("input").scrollHeight, 180) + "px";
+});
+
+$("menuBtn").onclick = () => {
+  $("sidebar").classList.toggle("open");
+};
+
+/* BAŞLAT */
+
+async function init() {
+  chatList = getLocalChats();
+  renderHistory();
+  renderChat();
+
+  if (!supabase) {
+    setStatus("Misafir modu");
+    return;
+  }
+
+  const { data } = await supabase.auth.getSession();
+  await applyUser(data?.session?.user || null);
+
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event !== "INITIAL_SESSION") {
+      setTimeout(() => applyUser(session?.user || null), 0);
+    }
+  });
+}
+
+init();
+</script>
+</body>
+</html>
