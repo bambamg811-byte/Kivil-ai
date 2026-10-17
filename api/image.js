@@ -1,19 +1,23 @@
 
+
 export default async function handler(req, res) {
+  // Yalnızca POST isteklerini kabul et
   if (req.method !== "POST") {
     return res.status(405).json({
       error: "Yalnızca POST isteği destekleniyor."
     });
   }
 
+  // API anahtarı kontrolü
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
     return res.status(500).json({
-      error: "OPENAI_API_KEY Vercel ayarlarında bulunamadı."
+      error: "OPENAI_API_KEY Vercel ortam değişkenlerinde bulunamadı."
     });
   }
 
+  // İstemden açıklamayı al
   const prompt =
     typeof req.body?.prompt === "string"
       ? req.body.prompt.trim()
@@ -21,13 +25,13 @@ export default async function handler(req, res) {
 
   if (!prompt) {
     return res.status(400).json({
-      error: "Lütfen çizilecek resmi tarif et."
+      error: "Lütfen oluşturulacak görseli tarif et."
     });
   }
 
-  if (prompt.length > 2000) {
+  if (prompt.length > 4000) {
     return res.status(400).json({
-      error: "Resim açıklaması en fazla 2000 karakter olabilir."
+      error: "Görsel açıklaması en fazla 4000 karakter olabilir."
     });
   }
 
@@ -37,11 +41,11 @@ export default async function handler(req, res) {
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: "gpt-image-2.5-flare",
+          model: "gpt-image-1",
           prompt,
           size: "1024x1024",
           quality: "low",
@@ -50,27 +54,25 @@ export default async function handler(req, res) {
       }
     );
 
-    const result = await response.json();
+    const result = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      console.error("Image API error:", result.error?.code);
+      console.error("OpenAI image API error:", result);
 
-      return res.status(
-        response.status >= 400 && response.status < 500
-          ? response.status
-          : 502
-      ).json({
+      return res.status(response.status).json({
         error:
-          result.error?.message ||
-          "Resim oluşturulamadı. API ayarlarını kontrol et."
+          result?.error?.message ||
+          `Görsel API hatası: ${response.status}`
       });
     }
 
-    const image = result.data?.[0]?.b64_json;
+    const image = result?.data?.[0]?.b64_json;
 
     if (!image) {
+      console.error("Image response did not contain b64_json");
+
       return res.status(502).json({
-        error: "API resim döndürmedi."
+        error: "API yanıt verdi ancak görsel verisi bulunamadı."
       });
     }
 
@@ -78,9 +80,14 @@ export default async function handler(req, res) {
       image: `data:image/jpeg;base64,${image}`
     });
   } catch (error) {
-    console.error("Image generation failed:", error.message);
+    console.error("Image generation error:", error);
 
     return res.status(500).json({
+      error: "Görsel oluşturulurken sunucu hatası oluştu."
+    });
+  }
+}
+
       error: "Resim servisine bağlanırken hata oluştu."
     });
   }
