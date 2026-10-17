@@ -59,9 +59,10 @@ export default async function handler(req, res) {
     const data = await response.json();
 
   if (!response.ok) {
-  console.error("Google AI API error:", data?.error?.message);
+  const googleMessage = data?.error?.message || "Bilinmeyen Google API hatası";
+  console.error("Google AI API error:", response.status, googleMessage);
   return res.status(502).json({
-    error: "Google AI cevap veremedi. API anahtarını ve kullanım durumunu kontrol et."
+    error: `Google API (${response.status}): ${googleMessage}`
   });
   }
 
