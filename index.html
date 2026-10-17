@@ -180,8 +180,11 @@
         const link = document.createElement('a'); link.className = 'small-btn'; link.href = dataUrl; link.download = 'kivil-ai-gorsel.jpg'; link.textContent = '⬇ Görseli indir'; actions.append(link); result.body.append(actions);
       }
       async function sendMessage(rawText) {
-        const text = String(rawText || '').trim(); if (!text || busy) return;
-        const chosenMode = mode;
+      const text = String(rawText || '').trim();
+if (!text || busy) return;
+
+const imageIntent = /\b(resim|görsel|fotoğraf|çiz|çizsene|çizim|logo|poster|wallpaper|image|picture|draw|generate|oluştur|üret)\b/i.test(text);
+const chosenMode = (mode === 'image' || imageIntent) ? 'image' : 'chat';
         welcome.classList.add('hidden'); messagesEl.classList.remove('hidden');
         const chat = ensureChat(text);
         chat.messages.push({ role: 'user', content: text }); chat.updatedAt = Date.now();
