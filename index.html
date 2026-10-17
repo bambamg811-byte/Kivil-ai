@@ -47,8 +47,7 @@ function setMode(next) {
     mode === 'research' ? 'Araştır' : 'Gönder'
   );
 }
-function renderHistory(){
-  mode = ['chat', 'image', 'research'].includes(next) ? next : 'chat';
+function renderHistory(){historyEl.replaceChildren();
 
   chatModeBtn.classList.toggle('active', mode === 'chat');
   imageModeBtn.classList.toggle('active', mode === 'image');
