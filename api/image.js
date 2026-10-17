@@ -1,14 +1,11 @@
 
-
 export default async function handler(req, res) {
-  // Yalnızca POST isteklerini kabul et
   if (req.method !== "POST") {
     return res.status(405).json({
       error: "Yalnızca POST isteği destekleniyor."
     });
   }
 
-  // API anahtarı kontrolü
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
@@ -17,7 +14,6 @@ export default async function handler(req, res) {
     });
   }
 
-  // İstemden açıklamayı al
   const prompt =
     typeof req.body?.prompt === "string"
       ? req.body.prompt.trim()
@@ -58,19 +54,14 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       console.error("OpenAI image API error:", result);
-
       return res.status(response.status).json({
-        error:
-          result?.error?.message ||
-          `Görsel API hatası: ${response.status}`
+        error: result?.error?.message || `Görsel API hatası: ${response.status}`
       });
     }
 
     const image = result?.data?.[0]?.b64_json;
 
     if (!image) {
-      console.error("Image response did not contain b64_json");
-
       return res.status(502).json({
         error: "API yanıt verdi ancak görsel verisi bulunamadı."
       });
@@ -83,11 +74,7 @@ export default async function handler(req, res) {
     console.error("Image generation error:", error);
 
     return res.status(500).json({
-          error: "Resim servisine bağlanırken hata oluştu."
-    });
-  }
-}
-      error: "Resim servisine bağlanırken hata oluştu."
+      error: "Görsel oluşturulurken sunucu hatası oluştu."
     });
   }
 }
