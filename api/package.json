@@ -3,5 +3,8 @@
   "name": "kivil-ai",
   "version": "1.0.0",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "@gradio/client": "^1.15.0"
+  }
 }
