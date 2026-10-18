@@ -13,7 +13,7 @@
 <button class="mode-btn image" id="imageModeBtn" type="button">🎨 Görsel oluştur</button><span class="mode-note" id="modeNote">Groq ile sohbet</span></div><form id="composerForm"><div class="input-row"><textarea id="prompt" class="prompt" rows="1" maxlength="6000" placeholder="Kıvıl AI'a bir şey sor..." aria-label="Mesajını yaz"></textarea><button class="send-btn" id="sendBtn" type="submit" aria-label="Gönder">↑</button></div></form><div class="composer-foot"><span>Yanıtları önemli konularda kontrol etmeyi unutma.</span><span id="counter">0 / 6000</span></div></div></div></section></main></div><div id="toast" class="toast hidden" role="status"></div>
 <button class="mode-btn" id="videoModeBtn" type="button">🎬 Video oluştur</button>
   <script>
-(()=>{'use strict';const $=s=>document.querySelector(s),welcome=$('#welcome'),messagesEl=$('#messages'),historyEl=$('#history'),promptEl=$('#prompt'),sendBtn=$('#sendBtn'),chatModeBtn=$('#chatModeBtn'),imageModeBtn=$('#imageModeBtn'),researchModeBtn=$('#researchModeBtn'),modeNote=$('#modeNote'),counter=$('#counter'),STORAGE_KEY='kivil-ai-chats-v1';let chats=loadChats(),activeChatId=null,busy=false,mode='chat',toastTimer;
+(()=>{'use strict';const $=s=>document.querySelector(s),welcome=$('#welcome'),messagesEl=$('#messages'),historyEl=$('#history'),promptEl=$('#prompt'),sendBtn=$('#sendBtn'),chatModeBtn=$('#chatModeBtn'),imageModeBtn=$('#imageModeBtn'),videoModeBtn=$('#videoModeBtn'),researchModeBtn=$('#researchModeBtn'),modeNote=$('#modeNote'),counter=$('#counter'),STORAGE_KEY='kivil-ai-chats-v1';let chats=loadChats(),activeChatId=null,busy=false,mode='chat',toastTimer;
 function loadChats(){try{const v=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');return Array.isArray(v)?v:[]}catch{return[]}}function saveChats(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(chats.slice(0,40)))}catch{showToast('Sohbet geçmişi kaydedilemedi.')}}function makeId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}function currentChat(){return chats.find(c=>c.id===activeChatId)||null}function createChat(first=''){const c={id:makeId(),title:(first||'Yeni sohbet').replace(/\s+/g,' ').slice(0,42),messages:[],updatedAt:Date.now()};chats.unshift(c);activeChatId=c.id;welcome.classList.add('hidden');messagesEl.classList.remove('hidden');messagesEl.replaceChildren();saveChats();renderHistory();return c}function ensureChat(t){return currentChat()||createChat(t)}function showToast(msg) {
   const t = $('#toast');
   t.textContent = msg;
@@ -26,29 +26,33 @@ function loadChats(){try{const v=JSON.parse(localStorage.getItem(STORAGE_KEY)||'
 }
 
 function setMode(next) {
-  mode = ['chat', 'image', 'research'].includes(next) ? next : 'chat';
+  mode = ['chat', 'image', 'research', 'video'].includes(next) ? next : 'chat';
 
   chatModeBtn.classList.toggle('active', mode === 'chat');
   imageModeBtn.classList.toggle('active', mode === 'image');
   researchModeBtn.classList.toggle('active', mode === 'research');
+  videoModeBtn.classList.toggle('active', mode === 'video');
 
   modeNote.textContent =
     mode === 'image' ? 'Cloudflare FLUX ile görsel' :
+    mode === 'video' ? 'FAL ile video üretimi' :
     mode === 'research' ? 'Groq ile internet araştırması' :
     'Groq ile sohbet';
 
   promptEl.placeholder =
     mode === 'image' ? 'Nasıl bir görsel oluşturalım?' :
+    mode === 'video' ? 'Nasıl bir video oluşturalım?' :
     mode === 'research' ? 'Hangi konuyu araştıracaksın?' :
     'Kıvıl AI’a bir şey sor...';
 
   sendBtn.setAttribute(
     'aria-label',
     mode === 'image' ? 'Görsel oluştur' :
+    mode === 'video' ? 'Video oluştur' :
     mode === 'research' ? 'Araştır' : 'Gönder'
   );
 }
-function renderHistory(){historyEl.replaceChildren();const recent=[...chats].sort((a,b)=>b.updatedAt-a.updatedAt).slice(0,30);if(!recent.length){const e=document.createElement('div');e.textContent='Henüz sohbet yok';e.style.cssText='padding:8px 10px;color:#737b9d;font-size:12px';historyEl.append(e);return}for(const c of recent){const b=document.createElement('button');b.className='history-item'+(c.id===activeChatId?' active':'');b.textContent=c.title||'Yeni sohbet';b.addEventListener('click',()=>openChat(c.id));historyEl.append(b)}}function openChat(id){const c=chats.find(x=>x.id===id);if(!c)return;activeChatId=id;welcome.classList.add('hidden');messagesEl.classList.remove('hidden');messagesEl.replaceChildren();for(const m of c.messages){const r=addMessage(m.role,m.content,{scroll:false});if(m.role==='assistant'&&m.imageData)addImageToMessage(r,m.imageData,m.imageAlt||'Oluşturulan görsel');else if(m.role==='assistant'&&m.imageNote){const p=document.createElement('p');p.textContent='Görsel geçmişte yeniden açılabilir durumda değil; yeni bir görsel üretmek için isteği tekrar gönder.';r.body.append(p)}}renderHistory();scrollToBottom()}
+function renderHistory(){historyEl.replaceChildren();const recent=[...chats].sort((a,b)=>b.updatedAt-a.updatedAt).slice(0,30);if(!recent.length){const e=document.createElement('div');e.textContent='Henüz sohbet yok';e.style.cssText='padding:8px 10px;color:#737b9d;font-size:12px';historyEl.append(e);return}for(const c of recent){const b=document.createElement('button');b.className='history-item'+(c.id===activeChatId?' active':'');b.textContent=c.title||'Yeni sohbet';b.addEventListener('click',()=>openChat(c.id));historyEl.append(b)}}function openChat(id){const c=chats.find(x=>x.id===id);if(!c)return;activeChatId=id;welcome.classList.add('hidden');messagesEl.classList.remove('hidden');messagesEl.replaceChildren();for(const m of c.messages){const r=addMessage(m.role,m.content,{scroll:false});if(m.role==='assistant'&&m.imageData)addImageToMessage(r,m.imageData,m.imageAlt||'Oluşturulan görsel');else if(m.role==='assistant'&&m.imageNote){const p=document.createElement('p');p.textContent='Görsel geçmişte yeniden açılabilir durumda değil; yeni bir görsel üretmek için isteği tekrar gönder.';r.body.append(p)}}renderHistory();scrollToBottom()}videoModeBtn.addEventListener('click', () => setMode('video'));
 function addMessage(role,content,opts={}){const row=document.createElement('article');row.className='message '+(role==='user'?'user':'assistant');const av=document.createElement('div');av.className='avatar';av.textContent=role==='user'?'🙂':'✦';const wrap=document.createElement('div');wrap.className='bubble-wrap';const body=document.createElement('div');body.className='bubble';if(role==='assistant'&&window.marked&&window.DOMPurify){body.innerHTML=window.DOMPurify.sanitize(window.marked.parse(String(content||''),{breaks:true}),{USE_PROFILES:{html:true}});body.querySelectorAll('a').forEach(a=>{a.target='_blank';a.rel='noopener noreferrer'})}else body.textContent=String(content||'');wrap.append(body);row.append(av,wrap);messagesEl.append(row);if(opts.scroll!==false)scrollToBottom();return{row,body,wrap}}function showTyping(){const r=addMessage('assistant','',{scroll:false}),d=document.createElement('div');d.className='typing';d.innerHTML='<i></i><i></i><i></i>';r.body.append(d);scrollToBottom();return r}function scrollToBottom(){requestAnimationFrame(()=>window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}))}function setBusy(v){busy=v;sendBtn.disabled=v;promptEl.disabled=v;chatModeBtn.disabled=v;imageModeBtn.disabled=v;sendBtn.textContent=v?'…':'↑'}function addImageToMessage(r,dataUrl,alt){const img=document.createElement('img');img.className='msg-image';img.src=dataUrl;img.alt=alt||'Oluşturulan görsel';img.loading='eager';r.body.append(img);const actions=document.createElement('div');actions.className='image-actions';const a=document.createElement('a');a.className='small-btn';a.href=dataUrl;a.download='kivil-ai-gorsel.jpg';a.textContent='⬇ Görseli indir';actions.append(a);r.body.append(actions)}
 function looksLikeImageRequest(text){return /(?:resim|görsel|fotoğraf|illüstrasyon|çizim|logo|poster|duvar\s*kâğıdı|duvar\s*kağıdı|wallpaper|image|picture)\s*(?:oluştur|üret|yap|çiz|hazırla|generate|create|draw)?|(?:oluştur|üret|çiz|çizsene|hazırla|generate|create|draw)\s*(?:bana\s*)?(?:bir\s*)?(?:resim|görsel|fotoğraf|logo|poster|image|picture)|\b(?:çiz|çizsene|draw)\b/i.test(text)}
 async function sendMessage(rawText){const text=String(rawText||'').trim();if(!text||busy)return;const imageIntent = looksLikeImageRequest(text);
@@ -60,8 +64,31 @@ if (mode === 'chat' && imageIntent) {
   showToast('Görsel isteği algılandı. Görsel oluşturuluyor…');
 } 
 welcome.classList.add('hidden');messagesEl.classList.remove('hidden');const chat=ensureChat(text);chat.messages.push({role:'user',content:text});chat.updatedAt=Date.now();addMessage('user',text);saveChats();renderHistory();promptEl.value='';promptEl.style.height='auto';counter.textContent='0 / 6000';setBusy(true);const typing=showTyping();
-try{const response=await fetch(chosenMode==='image'?'/api/image':'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(chosenMode==='image'?{prompt:text}:{mode:chosenMode,messages:chat.messages.map(m=>({role:m.role,content:m.content}))})});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||data.message||`Sunucu hatası (${response.status})`);typing.row.remove();if(chosenMode==='image'){if(typeof data.image!=='string'||!data.image.startsWith('data:image/'))throw new Error('Görsel servisi geçerli görsel verisi döndürmedi. api/image.js yanıtını kontrol et.');const answer='🎨 Görsel oluşturuldu: '+text;chat.messages.push({role:'assistant',content:answer,imageNote:true});const result=addMessage('assistant','🎨 İşte oluşturduğum görsel:');addImageToMessage(result,data.image,text)}else{const answer=data.reply??data.message??data.content??data.choices?.[0]?.message?.content;if(typeof answer!=='string'||!answer.trim())throw new Error('Sunucudan boş cevap geldi. api/chat.js dosyasını kontrol et.');chat.messages.push({role:'assistant',content:answer});addMessage('assistant',answer)}chat.updatedAt=Date.now();saveChats();renderHistory()}catch(error){typing.row.remove();const message=error?.message||'Bilinmeyen hata';addMessage('assistant',`İstek tamamlanamadı.\n\n**Hata:** ${message}\n\nVercel'de api/image.js günlüklerini ve OpenAI API erişimini kontrol et.`);showToast(chosenMode==='image'?'Görsel oluşturulamadı.':'Mesaj gönderilemedi.')}finally{setBusy(false);promptEl.focus();scrollToBottom()}}
- // KIVIL AI: Mesaj işlemleri
+ttry {
+  const endpoint =
+    chosenMode === 'image' ? '/api/image' :
+    chosenMode === 'video' ? '/api/video' :
+    '/api/chat';
+
+  const payload =
+    chosenMode === 'image' || chosenMode === 'video'
+      ? { prompt: text, mode: 'text' }
+      : {
+          mode: chosenMode,
+          messages: chat.messages.map(m => ({
+            role: m.role,
+            content: m.content
+          }))
+        };
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json().catch(() => ({})); 
+  // KIVIL AI: Mesaj işlemleri
 
 function copyKivilText(text) {
   const value = String(text || "");
