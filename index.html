@@ -268,22 +268,36 @@ addMessage = function(role, content, opts = {}) {
 $('#composerForm').addEventListener('submit',e=>{e.preventDefault();sendMessage(promptEl.value)});$('#newChatBtn').addEventListener('click',()=>{activeChatId=null;welcome.classList.remove('hidden');messagesEl.classList.add('hidden');messagesEl.replaceChildren();setMode('chat');promptEl.value='';renderHistory();promptEl.focus()});chatModeBtn.addEventListener('click',()=>setMode('chat'));
 researchModeBtn.addEventListener('click',()=>setMode('research'));
 imageModeBtn.addEventListener('click',()=>setMode('image'));promptEl.addEventListener('input',()=>{promptEl.style.height='auto';promptEl.style.height=Math.min(promptEl.scrollHeight,180)+'px';counter.textContent=`${promptEl.value.length} / 6000`});promptEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!busy)sendMessage(promptEl.value)}});document.querySelectorAll('.suggestion').forEach(b=>b.addEventListener('click',()=>{setMode(b.dataset.mode);promptEl.value=b.dataset.prompt||'';promptEl.dispatchEvent(new Event('input'));promptEl.focus();if(mode==='image')showToast('Görsel isteği hazır. Gönder düğmesine bas!')}));setMode('chat');renderHistory();})();
+setMode('chat');
+renderHistory();
+})();
+</script>
+
 <!-- Video oynatıcı alanı -->
-<div id="videoResult" style="display:none; margin:20px auto; max-width:720px;">
+<div id="videoResult" class="hidden"
+     style="margin:20px auto; max-width:720px;">
+
+  <h3>Kıvıl AI Video 🎬</h3>
+
   <video
     id="generatedVideo"
     controls
     playsinline
-    style="width:100%; border-radius:12px;">
+    preload="metadata"
+    style="width:100%; border-radius:12px; background:#080914;">
   </video>
 
-  <a
-    id="downloadVideo"
-    href="#"
-    download="kivil-video.mp4"
-    style="display:inline-block; margin-top:10px;">
-    📥 Videoyu indir
-  </a>
+  <div style="margin-top:12px;">
+    <a
+      id="downloadVideo"
+      href="#"
+      download="kivil-video.mp4"
+      class="small-btn">
+      📥 Videoyu indir
+    </a>
+  </div>
+
 </div>
 
-</script></body></html>
+</body>
+</html>/<body></html>
